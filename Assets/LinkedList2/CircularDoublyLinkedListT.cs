@@ -4,27 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 
-public class CircularDoublyLinkedListNode<T>
-{
-    public T Value { get; set; }
-    public CircularDoublyLinkedList<T> List { get; set; }
 
-    // 리스트 내부 전용 링크 = 마지막 노드의 next가 처음 노드인 원형 연결
-    public CircularDoublyLinkedListNode<T> next;
-    public CircularDoublyLinkedListNode<T> prev;
-
-    // 사용자가 보는 링크 = 이음새(마지막 → 처음)에서 null을 돌려줘 원형을 숨긴다
-    public CircularDoublyLinkedListNode<T> Next => 
-        next == null || next == List.First ? null : next;
-
-    public CircularDoublyLinkedListNode<T> Previous => 
-        prev == null || this == List.First ? null : prev;
-
-    public CircularDoublyLinkedListNode(T value)
-    {
-        Value = value;
-    }
-}
 
 public class CircularDoublyLinkedList<T> : IEnumerable<T>
 //그러네 CircularDoublyLinkedList 스크립트인데 왜 CircularDoublyLinkedList를 참조하지
@@ -40,6 +20,27 @@ public class CircularDoublyLinkedList<T> : IEnumerable<T>
 
     public CircularDoublyLinkedListNode<T> First => head;
     public CircularDoublyLinkedListNode<T> Last => head?.prev;
+
+
+    private void InsertBefore(CircularDoublyLinkedListNode<T> target, CircularDoublyLinkedListNode<T> newNode)
+    {
+        newNode.prev = target.prev;
+        target.prev.next = newNode;
+        newNode.next = target;
+
+        target.prev = newNode;
+    }
+
+    //public CircularDoublyLinkedListNode<T> AddBefore(CircularDoublyLinkedListNode<T> node, T value)
+    //{
+    //    validataNode(node);
+
+    //    if(node == head)
+    //    {
+
+    //    }
+    //}
+
 
     // ── 앞으로 열거 ──
     public IEnumerator<T> GetEnumerator()
@@ -113,7 +114,8 @@ public class CircularDoublyLinkedList<T> : IEnumerable<T>
         var node = new CircularDoublyLinkedListNode<T>(value);
         node.List = this;
 
-        if (head?.prev == null)
+        //if (head?.prev == null)
+        if (head == null)
         {
             node.next = node;
             node.prev = node;
@@ -123,10 +125,7 @@ public class CircularDoublyLinkedList<T> : IEnumerable<T>
         }
         else
         {
-            node.prev = head?.prev;
-            head.prev.next = node;
-            node.next = head;
-            head.prev = node;        // ← 이 한 줄만 다름
+            InsertBefore(head, node);
         }
 
         Count++;
@@ -134,7 +133,67 @@ public class CircularDoublyLinkedList<T> : IEnumerable<T>
     }
 
 
+    public CircularDoublyLinkedListNode<T> AddAfter(CircularDoublyLinkedListNode<T> node, T value)
+    {
+        ValidataNode(node);
 
+        var newNode = new CircularDoublyLinkedListNode<T>(value);
+        newNode.List = this;
+
+        Count++;
+        return newNode;
+
+        //var newNode = new CircularDoublyLinkedListNode<T>(value);
+    }
+
+    public CircularDoublyLinkedListNode<T> AddBefore(CircularDoublyLinkedListNode<T> node, T value)
+    {
+        ValidataNode(node);
+
+        var newNode = new CircularDoublyLinkedListNode<T>(value);
+        newNode.List = this;
+
+        if(node == head)
+        {
+            head = newNode;
+        }
+        Count++;
+        return newNode;
+    }
+
+
+
+    public void Remove(CircularDoublyLinkedListNode<T> node)
+    {
+        ValidataNode(node);
+
+        if(Count == 1)
+        {
+            head = null;
+        }
+        else
+        {
+            node.prev.next = node.next;
+            node.prev.prev = node.prev;
+
+            if(node == head)
+            {
+                head = node.next;
+            }
+        }
+
+        node.next = null;
+        node.prev = null;
+        node.List = null;
+
+
+        Count--;
+    }
+
+    private void ValidataNode(CircularDoublyLinkedListNode<T> node)
+    {
+        throw new NotImplementedException();
+    }
 
     public CircularDoublyLinkedListNode<T> Find(T value)
     {
@@ -160,7 +219,8 @@ public class CircularDoublyLinkedList<T> : IEnumerable<T>
     {
         var start = head;
         var current = start;
-        while (current != null)
+
+        for (var i = 0; i < Count; i++)
         {
             //var next = current.Next;
             var next = current.next;//대문자 쓰면 안됨
@@ -168,18 +228,15 @@ public class CircularDoublyLinkedList<T> : IEnumerable<T>
             current.prev = null;
             current.List = null;
             current = next;
-            if (current == start) break;
         }
+
 
         head = null;
         Count = 0;
     }
 
 
-    private void InsertBefore(CircularDoublyLinkedListNode<T> target, CircularDoublyLinkedListNode<T> newNode)
-    {
-        target.prev = newNode;
-    }
+
 
 
 

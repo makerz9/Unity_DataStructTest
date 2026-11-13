@@ -1,8 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.IO.LowLevel.Unsafe;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static UnityEngine.Tilemaps.TilemapRenderer;
 
 
 
@@ -38,13 +42,21 @@ public class BinarySearchTree<TKey, TValue> : IDictionary<TKey, TValue>
         }
     }
 
-    public ICollection<TKey> Keys => throw new System.NotImplementedException();
+    public ICollection<TKey> Keys => InOrderTraversal().Select(kvp => kvp.Key).ToList(); //linq연산자를?
 
-    public ICollection<TValue> Values => throw new System.NotImplementedException();
+    public ICollection<TValue> Values => InOrderTraversal().Select(kvp => kvp.Value).ToList();
 
-    public int Count {get; protected set;}
+    //public int Count => CountNodes(root);
+    //public virtual int CountNodes(TreeNode<TKey, TValue> node)
+    //{
+    //    if (node == null)
+    //        return 0;
+    //    ///////////////////////////////////////////////////////////////////////return 1 = + CountNodes(node.Left) + CountNodes(node.Right);
+    //}
 
     public bool IsReadOnly => false;
+
+    public int Count => throw new NotImplementedException();
 
     public virtual void Add(TKey key, TValue value)
     {
@@ -153,22 +165,92 @@ public class BinarySearchTree<TKey, TValue> : IDictionary<TKey, TValue>
 
     public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
     {
-        throw new System.NotImplementedException();
+        if(array == null)
+            throw new ArgumentException(nameof(array));
+        if(arrayIndex < 0 || arrayIndex > array.Length)
+            throw new ArgumentOutOfRangeException(nameof(arrayIndex));  
+        if(array.Length - arrayIndex < 0)
+
+
+
+        foreach (var kvp in this)
+        {
+            array[arrayIndex++] = kvp;
+        }
+
+
+
     }
 
     public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
     {
-        throw new System.NotImplementedException();
+        //throw new System.NotImplementedException();
+        //return InOrderTraversal(root);
+        return InOrderTraversal().GetEnumerator();
     }
 
     public bool Remove(TKey key)
     {
-        throw new System.NotImplementedException();
+        //throw new System.NotImplementedException();
+        if (!ContainsKey(key))
+            return false;
+
+        root = Remove(root, key);
+        return true;
     }
 
     public bool Remove(KeyValuePair<TKey, TValue> item)
     {
-        throw new System.NotImplementedException();
+        return Remove(item.Key);
+    }
+
+    protected virtual TreeNode<TKey, TValue> Remove(TreeNode<TKey, TValue> node, TKey key)
+    {
+        if(node == null)
+        {
+            return node;
+        }
+
+        int compare = key.CompareTo(node.Key);
+        if(compare < 0)
+        {
+            node.Left = Remove(node.Left, key);
+        }
+        else if (compare > 0)
+        {
+            node.Right = Remove(node.Right, key);
+        }
+        else
+        {
+            if(node.Left == null)
+            {
+                return node.Right;
+            }
+            if(node.Right == null)
+            {
+                return node.Left;
+            }
+
+            var minNode = FindMin(node.Right);
+            node.Key = minNode.Key;
+            node.Value = minNode.Value;
+
+            node.Right = Remove(node.Right, minNode.Key);
+
+        }
+
+        UpdateHeight(node);
+        return node;
+    }
+
+    protected virtual TreeNode<TKey, TValue> FindMin(TreeNode<TKey, TValue> node)
+    {
+        while(node.Left != null)
+        {
+            node = node.Left;
+        }
+        return node;
+
     }
 
     public bool TryGetValue(TKey key, out TValue value)
@@ -207,4 +289,116 @@ public class BinarySearchTree<TKey, TValue> : IDictionary<TKey, TValue>
     {
         return GetEnumerator();
     }
+
+
+    private void PreOrder(TreeNode<TKey, TValue> node, List<KeyValuePair<TKey, TValue>> result)
+    {
+        if (node == null) return;
+        result.Add(new KeyValuePair<TKey, TValue>(node.Key, node.Value));
+        PreOrder(node.Left, result);
+        PreOrder(node.Right, result);
+    }
+
+    //PreOrder	전위	나 → 왼 → 오
+    public virtual IEnumerable<KeyValuePair<TKey, TValue>> PreOrderTraversal(TreeNode<TKey, TValue> node)
+    {
+        if (node != null)
+        {
+            foreach (var kvp in PreOrderTraversal(node.Left))
+            {
+                yield return kvp;
+            }
+            yield return new KeyValuePair<TKey, TValue>(node.Key, node.Value);
+            foreach (var kvp in PreOrderTraversal(node.Right))
+            {
+                yield return kvp;
+            }
+        }
+    }
+
+
+    private void InOrder(TreeNode<TKey, TValue> node, List<KeyValuePair<TKey, TValue>> result)
+    {
+        ////전위 - 나 왼 오
+        //if (node == null) return;
+        //PreOrder(node.Left, result);
+        //result.Add(new KeyValuePair<TKey, TValue>(node.Key, node.Value));
+        //PreOrder(node.Right, result);
+
+        return InOrderTraversal(root);
+    }
+
+
+    //InOrder	중위	왼 → 나 → 오
+    public virtual IEnumerable<KeyValuePair<TKey, TValue>> InOrderTraversal(TreeNode<TKey, TValue>node) //이거는 매개변수 기능 없다고도 하심
+    {
+        //var result = new List<KeyValuePair<TKey, TValue>>();
+        //InOrder(root, result);
+        //return result;
+        if(node != null)
+        {
+            foreach (var kvp in InOrderTraversal(node.Left))
+            {
+                yield return kvp;
+            }
+            yield return new KeyValuePair<TKey, TValue>(node.Key, node.Value);
+            foreach (var kvp in InOrderTraversal(node.Right))
+            {
+                yield return kvp;
+            }
+        }
+
+
+    }
+
+
+    //PostOrder 후위  왼 → 오 → 나
+    private void PostOrder(TreeNode<TKey, TValue> node, List<KeyValuePair<TKey, TValue>> result)
+    {
+        //전위 - 나 왼 오
+        if (node == null) return;
+        
+        PreOrder(node.Left, result);
+        PreOrder(node.Right, result);
+        result.Add(new KeyValuePair<TKey, TValue>(node.Key, node.Value));
+    }
+
+
+    //후위 - 왼 오 나
+    public virtual IEnumerable<KeyValuePair<TKey, TValue>> PostOrderTraversal()
+    {
+        var result = new List<KeyValuePair<TKey, TValue>>();
+        PostOrder(root, result);
+        return result;
+    }
+
+    //??? 계층구조?
+    public virtual IEnumerable<KeyValuePair<TKey, TValue>> LevelOrderTraversal(
+        TreeNode<TKey, TValue> node)
+    {
+        //throw new NotImplementedException();
+        if(node == null)
+        {
+            yield break;
+        }
+
+        var queue = new Queue<TreeNode<TKey, TValue>>();
+        queue.Enqueue(node);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            yield return new KeyValuePair<TKey, TValue>(current.Key, current.Value);
+
+            if(current.Left != null)
+            {
+                queue.Enqueue(current.Left);
+            }
+            if(current.Right != null)
+            {
+                queue.Enqueue(current.Right);
+            }
+        }
+    }
+
 }

@@ -84,7 +84,7 @@ public class DoublyLinkedList<T> : IEnumerable<T>
         }
         else
         {
-            node.Previous = tail;
+            node.Previous = tail; //새로 들어온 로드가 테일노드
             // [11] 왜?
             tail.Next = node;
             // [12] 왜?
@@ -96,7 +96,20 @@ public class DoublyLinkedList<T> : IEnumerable<T>
         return node;
     }
 
+    //public void Remove(DoublyLinkedListNode<T> node)
+    //{
+    //    ValidateNode(node);
 
+    //    if(node.Previous == null)
+    //    {
+    //        head = node.Next;
+    //    }
+
+    //    if(node == tail)
+    //    {
+
+    //    }
+    //}
 
 
 
