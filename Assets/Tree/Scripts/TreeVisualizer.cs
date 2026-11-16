@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using JetBrains.Annotations;
-using UnityEditor.ShaderGraph.Drawing.Inspector.PropertyDrawers;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using static UnityEngine.Rendering.DebugUI;
 
 public enum SpacingTypes
 {
@@ -41,6 +41,17 @@ public class TreeVisualizer : MonoBehaviour
                     horizontalSpacing * Mathf.Pow(2, root.Height - 3)
                 );
                 break;
+            case SpacingTypes.LevelOrder:   
+                AssignPositionsLevelOrder(root);
+                break;
+            case SpacingTypes.InOrder:
+                {
+                    int xIndex = 0;
+                    AssignPositionInorder(root, 0, ref xIndex);
+                }
+                
+                break;
+
         }
 
         origin = transform.position - nodePositions[root];
@@ -95,5 +106,48 @@ public class TreeVisualizer : MonoBehaviour
         Vector3 below = position + Vector3.down * verticalSpacing;
         AssignPositionsPow(node.Left, below + Vector3.left * offset, offset * 0.5f);
         AssignPositionsPow(node.Right, below + Vector3.right * offset, offset * 0.5f);
+    }
+
+    private void AssignPositionsLevelOrder<TKey, TValue> (TreeNode<TKey, TValue> root)
+    {
+        if (root == null)                 //  빈 트리면 그릴 게 없으니 그냥 종료
+        {
+            Debug.LogWarning("루트가 null이야! 트리에 노드가 안 들어갔어.");
+            return;
+        }
+        var queue = new Queue<TreeNode<TKey, TValue>>();
+        queue.Enqueue(root);
+
+        for (int depth = 0; queue.Count > 0; depth++)
+        {
+            int count = queue.Count;
+            for(int i = 0; i < count; i++)
+            {
+                var nodein = queue.Dequeue();
+                float x = (i - (count - 1) * 0.5f) * horizontalSpacing;
+                nodePositions[nodein] = new Vector3(x, -depth * verticalSpacing, 0f);
+
+                if(nodein.Left != null)
+                {
+                    queue.Enqueue(nodein.Left);
+                }
+                if(nodein.Right != null)
+                {
+                    queue.Enqueue(nodein.Right);
+                }
+            }
+        }
+
+    }
+
+    //중위순회
+    private void AssignPositionInorder<TKey, TValue> (TreeNode<TKey, TValue> root, int depth, ref int xIndex)
+    {
+        if(root ==null)
+            { return; }
+        AssignPositionInorder(root.Left, depth + 1, ref xIndex);
+        nodePositions[root] = new Vector3 (xIndex * horizontalSpacing, -depth * verticalSpacing, 0f);
+        xIndex++;
+        AssignPositionInorder(root.Right, depth + 1, ref xIndex);
     }
 }
