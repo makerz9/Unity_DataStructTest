@@ -34,24 +34,24 @@ public class PriorityQueue<TElement, TPriority>
 
     }
 
-    public PriorityQueue(IEnumerable<(TElement TElement, TPriority priority)> items)
-        :this(items, null)
-    {
+    //public PriorityQueue(IEnumerable<(TElement TElement, TPriority priority)> items)
+    //    :this(items, null)
+    //{
 
 
-        //
-        //heap = new List<(TElement,  TPriority Priority)>();
-        //foreach (var item in items)
-        //{
-        //    Enqueue(item.Element, item.Priority);
-        //}
+    //    //
+    //    //heap = new List<(TElement,  TPriority Priority)>();
+    //    //foreach (var item in items)
+    //    //{
+    //    //    Enqueue(item.Element, item.Priority);
+    //    //}
 
-        heap = new List<(TElement, TPriority)>(items);
-        for(int i = heap.Count / 2 - 1; i >= 0; --i)
-        {
-            Heap
-        }
-    }
+    //    heap = new List<(TElement, TPriority)>(items);
+    //    for(int i = heap.Count / 2 - 1; i >= 0; --i)
+    //    {
+    //        Heap;
+    //    }
+    //}
 
 
 
