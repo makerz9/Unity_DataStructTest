@@ -259,11 +259,6 @@ public class BinarySearchTree<TKey, TValue> : IDictionary<TKey, TValue>
         return GetEnumerator();
     }
 
-
-    // In - 중위 - 왼 나 오
-    // Pre - 전위 - 나 왼 오 
-    // Post - 후위 - 왼 오 나
-
     public virtual IEnumerable<KeyValuePair<TKey, TValue>> InOrderTraversal()
     {
         return InOrderTraversal(root);
