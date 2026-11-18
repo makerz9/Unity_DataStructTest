@@ -53,15 +53,16 @@ public class Stage : MonoBehaviour
 
 
     [ContextMenu("Reset Stage")]
+    //맵 재생성
     public void ResetStage()
     {
-        map = new Map();
+        map = new Map(); //새 맵 생성
         bool succeed = false;
-        int maxAttemp = 10;
+        int maxAttemp = 10; //무한루프 방지
         for (int i = 0; i < maxAttemp && !succeed; ++i)
         {
-            map.Init(mapHeight, mapWidth);
-            succeed = map.CreateIsland(
+            map.Init(mapHeight, mapWidth);//맵 초기화
+            succeed = map.CreateIsland( //성공했다면 succeed에 true 담김
                 erodePercent,
                 erodeIterations,
                 lakePercent,
@@ -90,9 +91,9 @@ public class Stage : MonoBehaviour
     private Player player;
 
 
-    private void CreatePlayer()
+    private void CreatePlayer() //캐릭터 새로 생성
     {
-        if(player != null)
+        if(player != null) //플레이어가 존재한다 = 제거함
         {
             Destroy(player.gameObject);
             player = null;
@@ -100,17 +101,17 @@ public class Stage : MonoBehaviour
 
         //Instantiate(playerPrefab, GetTilePos(map.startTile.id), Quaternion.identity);
 
-        var newGo = Instantiate(playerPrefab);
-        player = newGo.GetComponent<Player>();
+        var newGo = Instantiate(playerPrefab); //플레이어프리팹 생성
+        player = newGo.GetComponent<Player>(); // 생성한 오브젝트에 붙어 있는 Player 스크립트를 꺼내 player에 보관
     }
 
     private void CreateGrid()
     {
-        if (tileObjs != null)
+        if (tileObjs != null) // tileObjs가 존재한다?
         {
-            foreach (var tile in tileObjs)
+            foreach (var tile in tileObjs) 
             {
-                Destroy(tile.gameObject);
+                Destroy(tile.gameObject); //겹치지 않게 싹 비움
             }
         }
         tileObjs = new GameObject[mapWidth * mapHeight];
