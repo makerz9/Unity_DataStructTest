@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Stage : MonoBehaviour
 {
@@ -8,9 +9,15 @@ public class Stage : MonoBehaviour
     public int mapWidth = 20;
     public int mapHeight = 20;
 
+    public int viewWidth = 5;
+    public int viewHeight = 5;
+
     public Vector2 tileSize = new Vector2(16, 16);
 
     public Sprite[] islandSprites;
+    public Sprite[] fogSprite;
+
+    private bool[] revealed;
 
     private Map map;
 
@@ -82,10 +89,6 @@ public class Stage : MonoBehaviour
     public GameObject playerPrefab;
     private Player player;
 
-    public void OnTileVisted(int tileId)
-    {
-        Debug.Log($"OnTileVisted({tileId}: {tileId / mapWidth}, {tileId % mapHeight}) / {map.tiles[tileId].autoTileId}");
-    }
 
     private void CreatePlayer()
     {
@@ -111,6 +114,7 @@ public class Stage : MonoBehaviour
             }
         }
         tileObjs = new GameObject[mapWidth * mapHeight];
+        revealed = new bool[mapWidth * mapHeight]; //이게 왜안됨?
 
         Vector3 pos = firstTilePos;
         float startX = pos.x;
@@ -129,11 +133,56 @@ public class Stage : MonoBehaviour
                 tileObjs[tileId] = newGo;
 
                 DecorateTile(tileId);
+                newGo.GetComponent<SpriteRenderer>().enabled = false;
             }
             pos.x = startX;
             pos.y -= tileSize.y;
         }
     }
+
+
+    public void OnTileVisted(int tileId)
+    {
+        int centerY = tileId / mapWidth; // !@#1 ???????
+        int centerX = tileId % mapWidth; // !@#2 ???????? 이게 아까 그 칸수구하는 그거임?
+
+        // 2. 5×5의 절반
+        int halfW = viewWidth / 2;
+        int halfH = viewHeight / 2;
+
+        for (int y = centerY - halfH - 1; y <= centerY + halfH + 1; ++y)
+        {
+            for (int x = centerX - halfW - 1; x <= centerX + halfW + 1; ++x)
+            {
+                if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight) //개씨발 Height는 왜 되는데 애미 씨빨
+                    continue;
+
+                // 5. 행, 열 → 칸 번호
+                int id = y * mapWidth + x;
+                var ren = tileObjs[id].GetComponent<SpriteRenderer>();
+
+                // 6. 안쪽 5×5인가?
+                bool inside = Mathf.Abs(x - centerX) <= halfW
+                           && Mathf.Abs(y - centerY) <= halfH;
+
+                if (inside)
+                {
+                    revealed[id] = true;    // 봤다고 기억 아니 봤잖아
+                    DecorateTile(id);               // 원래 그림으로 되돌리기
+                    ren.enabled = true;
+                }
+                else if (!revealed[id])  // 테두리인데 아직 안 본 칸만
+                {
+                    ren.sprite = fogSprite[0];
+                    ren.enabled = true;
+                }
+            }
+        }
+    }
+
+
+
+
 
     public void DecorateTile(int tileId)
     {
