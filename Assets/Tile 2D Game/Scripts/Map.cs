@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -7,6 +8,7 @@ public enum TileTypes
 
     // 0, 14
     Grass = 15,
+    Trees,
     Hills,
     Mountains,
     Towns,
@@ -68,25 +70,128 @@ public class Map
         }
     }
 
+    public Tile startTile;
+    public Tile castleTile;
+
     public bool CreateIsland(
         float erodePercent,
-        int erodeIterations,
-        float lakePercent
-        )
+        float erodeIterations,
+        float lakePercent,
+        float treePercent,
+        float hillPercent,
+        float moutainPercent,
+        float townPercent,
+        float monsterPercent
+    )
     {
-        // 1단계: 해안 침식
+        DecorateTiles(LandTiles, lakePercent, TileTypes.Empty);
+
         for (int i = 0; i < erodeIterations; ++i)
         {
             DecorateTiles(CoastTiles, erodePercent, TileTypes.Empty);
         }
 
-        // 2단계: 호수 만들기
-        DecorateTiles(LandTiles, lakePercent, TileTypes.Empty);
+        DecorateTiles(LandTiles, treePercent, TileTypes.Trees);
+        DecorateTiles(LandTiles, hillPercent, TileTypes.Hills);
+        DecorateTiles(LandTiles, moutainPercent, TileTypes.Mountains);
+        DecorateTiles(LandTiles, townPercent, TileTypes.Towns);
+        DecorateTiles(LandTiles, monsterPercent, TileTypes.Monster);
 
-        return true;
+        var towns = tiles.Where(x => x.autoTileId == (int)TileTypes.Towns).ToArray();
+        if (towns.Length < 2)
+        {
+            return false;
+        }
+
+        ShuffleTiles(towns);
+
+        startTile = towns[0];
+        castleTile = towns[1];
+        castleTile.autoTileId = (int)TileTypes.Castle;
+
+        return PathFinding(startTile, castleTile) != null;
     }
 
-    public void DecorateTiles(Tile[] tiles, float percent, TileTypes tileTypes) // ← 원래대로 3개
+    private int Heuristic(Tile a, Tile b)
+    {
+        int ax = a.id % cols;
+        int ay = a.id / cols;
+
+        int bx = b.id % cols;
+        int by = b.id / cols;
+
+        return Mathf.Abs(ax - bx) + Mathf.Abs(ay - by);
+    }
+
+    private void ResetTilePrevious()
+    {
+        foreach (var tile in tiles)
+        {
+            tile.previous = null;
+        }
+    }
+
+    public List<Tile> PathFinding(Tile start, Tile end)
+    {
+        ResetTilePrevious();
+
+        var visited = new HashSet<Tile>();
+        var pQueue = new PriorityQueue<Tile, int>();
+        var distances = new int[tiles.Length];
+        for (int i = 0; i < distances.Length; ++i)
+        {
+            distances[i] = int.MaxValue;
+        }
+        distances[start.id] = 0;
+        pQueue.Enqueue(start, distances[start.id] + Heuristic(start, end));
+
+        bool success = false;
+        while (pQueue.Count > 0)
+        {
+            var currentNode = pQueue.Dequeue();
+            if (visited.Contains(currentNode))
+                continue;
+
+            if (currentNode == end)
+            {
+                success = true;
+                break;
+            }
+
+            visited.Add(currentNode);
+
+            foreach (var adjacent in currentNode.adjacents)
+            {
+                if (adjacent == null || visited.Contains(adjacent) || !adjacent.CanMove)
+                    continue;
+
+                var newDistance = distances[currentNode.id] + adjacent.Weight;
+                if (distances[adjacent.id] > newDistance)
+                {
+                    distances[adjacent.id] = newDistance;
+                    adjacent.previous = currentNode;
+                    pQueue.Enqueue(adjacent, newDistance + Heuristic(adjacent, end));
+                }
+            }
+        }
+
+        if (!success)
+        {
+            return null;
+        }
+
+        List<Tile> path = new List<Tile>();
+        Tile step = end;
+        while (step != null)
+        {
+            path.Add(step);
+            step = step.previous;
+        }
+        path.Reverse();
+        return path;
+    }
+
+    public void DecorateTiles(Tile[] tiles, float percent, TileTypes tileType)
     {
         int total = Mathf.FloorToInt(tiles.Length * percent);
 
@@ -94,19 +199,18 @@ public class Map
 
         for (int i = 0; i < total; ++i)
         {
-            if (tileTypes == TileTypes.Empty)
+            if (tileType == TileTypes.Empty)
             {
                 tiles[i].ClearAdjacents();
             }
-            tiles[i].autoTileId = (int)tileTypes;
+            tiles[i].autoTileId = (int)tileType;
         }
     }
 
-    public void ShuffleTiles(Tile[]tiles)
+    public void ShuffleTiles(Tile[] tiles)
     {
-
-        //피셔 예이츠 알고리즘
-        for (int i = tiles.Length - 1; i > 0; i--)
+        // 피셔 예이츠 셔플 알고리즘
+        for (int i = tiles.Length - 1; i > 0; --i)
         {
             int index = Random.Range(0, i + 1);
             Tile temp = tiles[i];
@@ -114,5 +218,4 @@ public class Map
             tiles[index] = temp;
         }
     }
-
 }

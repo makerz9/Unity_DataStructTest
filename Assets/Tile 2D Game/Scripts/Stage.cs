@@ -1,4 +1,3 @@
-using System.Net.NetworkInformation;
 using UnityEngine;
 
 public class Stage : MonoBehaviour
@@ -17,23 +16,89 @@ public class Stage : MonoBehaviour
 
     public Map Map => map;
 
+    [Range(0f, 0.9f)]
+    public float erodePercent = 0.3f;
+    public float erodeIterations = 2;
 
-    [Range(0f, 1f)]
-    public float erodePercent = 0.5f;
-    public int erodeIterations = 2;     // int로 변경
+    [Range(0f, 0.9f)]
+    public float lakePercent = 0.1f;
 
-    [Range(0f, 1f)]
-    public float lakePercent = 0.05f;   // 새로 선언
+    [Range(0f, 0.9f)]
+    public float treePercent = 0.1f;
+
+    [Range(0f, 0.9f)]
+    public float hillPercent = 0.1f;
+
+    [Range(0f, 0.9f)]
+    public float moutainPercent = 0.1f;
+
+    [Range(0f, 0.9f)]
+    public float townPercent = 0.1f;
+
+    [Range(0f, 0.9f)]
+    public float monsterPercent = 0.1f;
+
+
+    private void Awake()
+    {
+        ResetStage();
+    }
 
 
     [ContextMenu("Reset Stage")]
     public void ResetStage()
     {
         map = new Map();
-        map.Init(mapHeight, mapWidth);
-        map.CreateIsland(erodePercent, erodeIterations, lakePercent);
+        bool succeed = false;
+        int maxAttemp = 10;
+        for (int i = 0; i < maxAttemp && !succeed; ++i)
+        {
+            map.Init(mapHeight, mapWidth);
+            succeed = map.CreateIsland(
+                erodePercent,
+                erodeIterations,
+                lakePercent,
+                treePercent,
+                hillPercent,
+                moutainPercent,
+                townPercent,
+                monsterPercent
+            );
+        }
+
+        if (!succeed)
+        {
+            Debug.LogError("맵 생성 실패");
+            map = null;
+            return;
+        }
 
         CreateGrid();
+        CreatePlayer();
+    }
+
+    public Vector3 firstTilePos;
+
+    public GameObject playerPrefab;
+    private Player player;
+
+    public void OnTileVisted(int tileId)
+    {
+        Debug.Log($"OnTileVisted({tileId}: {tileId / mapWidth}, {tileId % mapHeight}) / {map.tiles[tileId].autoTileId}");
+    }
+
+    private void CreatePlayer()
+    {
+        if(player != null)
+        {
+            Destroy(player.gameObject);
+            player = null;
+        }
+
+        //Instantiate(playerPrefab, GetTilePos(map.startTile.id), Quaternion.identity);
+
+        var newGo = Instantiate(playerPrefab);
+        player = newGo.GetComponent<Player>();
     }
 
     private void CreateGrid()
@@ -47,7 +112,7 @@ public class Stage : MonoBehaviour
         }
         tileObjs = new GameObject[mapWidth * mapHeight];
 
-        Vector3 pos = Vector3.zero;
+        Vector3 pos = firstTilePos;
         float startX = pos.x;
         for (int i = 0; i < mapHeight; ++i)
         {
@@ -83,5 +148,35 @@ public class Stage : MonoBehaviour
         {
             ren.sprite = null;
         }
+    }
+
+    public int ScreenPosTileId(Vector3 screenPos, bool clamp = true)
+    {
+        Camera cam = Camera.main;
+        screenPos.z = Mathf.Abs(transform.position.z - cam.transform.position.z);
+        return WorldPosToTileId(Camera.main.ScreenToWorldPoint(screenPos), clamp);
+    }
+
+    public int WorldPosToTileId(Vector3 worldPos, bool clamp = true)
+    {
+        int x = Mathf.FloorToInt((worldPos.x - firstTilePos.x) / tileSize.x + 0.5f);
+        int y = Mathf.FloorToInt((firstTilePos.y - worldPos.y) / tileSize.y + 0.5f);
+
+        if (clamp)
+        {
+            x = Mathf.Clamp(x, 0, mapWidth - 1);
+            y = Mathf.Clamp(y, 0, mapHeight - 1);
+        }
+        return y * mapWidth + x;
+    }
+
+    public Vector3 GetTilePos(int y, int x)
+    {
+        return firstTilePos + new Vector3(x * tileSize.x, -y * tileSize.y);
+    }
+
+    public Vector3 GetTilePos(int tileId)
+    {
+        return GetTilePos(tileId / mapWidth, tileId % mapWidth);
     }
 }
