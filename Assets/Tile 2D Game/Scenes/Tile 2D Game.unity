@@ -722,6 +722,7 @@ MonoBehaviour:
   - {fileID: 21300026, guid: dfa5f63634ba24c06a7c899467e4f9f3, type: 3}
   - {fileID: 21300028, guid: dfa5f63634ba24c06a7c899467e4f9f3, type: 3}
   - {fileID: 21300030, guid: dfa5f63634ba24c06a7c899467e4f9f3, type: 3}
+  visitRadius: 3
   erodePercent: 0.242
   erodeIterations: 2
   lakePercent: 0.072

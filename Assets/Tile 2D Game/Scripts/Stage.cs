@@ -17,6 +17,8 @@ public class Stage : MonoBehaviour
     public Sprite[] islandSprites;
     public Sprite[] fogSprite;
 
+    public int visitRadius;
+
     private bool[] revealed;
 
     private Map map;
@@ -83,6 +85,9 @@ public class Stage : MonoBehaviour
 
         CreateGrid();
         CreatePlayer();
+
+        //map.startTile.isVisted = true;
+        //DecorateTile(m);
     }
 
     public Vector3 firstTilePos;
@@ -114,17 +119,17 @@ public class Stage : MonoBehaviour
                 Destroy(tile.gameObject); //겹치지 않게 싹 비움
             }
         }
-        tileObjs = new GameObject[mapWidth * mapHeight];
-        revealed = new bool[mapWidth * mapHeight]; //이게 왜안됨?
+        tileObjs = new GameObject[mapWidth * mapHeight]; //이건 생성자 문법인데 뭘 어떻게 만든거지 
+        revealed = new bool[mapWidth * mapHeight]; // 이거도
 
-        Vector3 pos = firstTilePos;
-        float startX = pos.x;
+        Vector3 pos = firstTilePos; //왜 시작 포스를 지정한거지
+        float startX = pos.x; //이거도
         for (int i = 0; i < mapHeight; ++i)
         {
-            for (int j = 0; j < mapWidth; ++j)
+            for (int j = 0; j < mapWidth; ++j) //가로 세로 이중포문해서 공간을 채움?
             {
-                var tileId = i * mapWidth + j;
-                var tile = map.tiles[tileId];
+                var tileId = i * mapWidth + j; //이거 식이 이해가안가네
+                var tile = map.tiles[tileId]; //
 
                 var newGo = Instantiate(tilePrefab, transform);
                 newGo.transform.position = pos;
@@ -134,7 +139,7 @@ public class Stage : MonoBehaviour
                 tileObjs[tileId] = newGo;
 
                 DecorateTile(tileId);
-                newGo.GetComponent<SpriteRenderer>().enabled = false;
+                //newGo.GetComponent<SpriteRenderer>().enabled = false;
             }
             pos.x = startX;
             pos.y -= tileSize.y;
@@ -144,41 +149,89 @@ public class Stage : MonoBehaviour
 
     public void OnTileVisted(int tileId)
     {
-        int centerY = tileId / mapWidth; // !@#1 ???????
-        int centerX = tileId % mapWidth; // !@#2 ???????? 이게 아까 그 칸수구하는 그거임?
+        Debug.Log($"");
 
-        // 2. 5×5의 절반
-        int halfW = viewWidth / 2;
-        int halfH = viewHeight / 2;
+        int centerY = tileId / mapWidth; // 
+        int centerX = tileId % mapWidth; // 
 
-        for (int y = centerY - halfH - 1; y <= centerY + halfH + 1; ++y)
+        int radius = visitRadius;
+
+        for(int i = -visitRadius; i <= visitRadius; i++)
         {
-            for (int x = centerX - halfW - 1; x <= centerX + halfW + 1; ++x)
+            for (int j = -visitRadius; j <= visitRadius; j++)
             {
-                if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight) //개씨발 Height는 왜 되는데 애미 씨빨
+                int x = centerX + j;
+                int y = centerY + i;
+                if(x < 0 || x >= mapWidth || y < 0 || y >= mapHeight)
+                {
                     continue;
+                }
 
-                // 5. 행, 열 → 칸 번호
                 int id = y * mapWidth + x;
-                var ren = tileObjs[id].GetComponent<SpriteRenderer>();
-
-                // 6. 안쪽 5×5인가?
-                bool inside = Mathf.Abs(x - centerX) <= halfW
-                           && Mathf.Abs(y - centerY) <= halfH;
-
-                if (inside)
-                {
-                    revealed[id] = true;    // 봤다고 기억 아니 봤잖아
-                    DecorateTile(id);               // 원래 그림으로 되돌리기
-                    ren.enabled = true;
-                }
-                else if (!revealed[id])  // 테두리인데 아직 안 본 칸만
-                {
-                    ren.sprite = fogSprite[0];
-                    ren.enabled = true;
-                }
+                map.tiles[id].isVisted = true;
+                DecorateTile(id);
             }
         }
+
+        for(int i = -radius;i <= radius;i++)
+        {
+            for(int j = -radius;j <= radius;j++)
+            {
+                if(i == radius || i == -radius || j == radius || j == -radius)
+                {
+                    int x = centerX + j;
+                    int y = centerY + i;
+                    if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight)
+                    {
+                        continue;
+                    }
+
+                    int id = y * mapWidth + x;
+                    map.tiles[id].UpdateAutoFowId();
+                    DecorateTile(id);
+                }
+
+
+            }
+        }
+
+        #region
+        //int centerY = tileId / mapWidth; // ???????
+        //int centerX = tileId % mapWidth; //  ???????? 이게 아까 그 칸수구하는 그거임? 
+
+        //// 2. 5×5의 절반
+        //int halfW = viewWidth / 2;
+        //int halfH = viewHeight / 2;
+
+        //for (int y = centerY - halfH - 1; y <= centerY + halfH + 1; ++y)
+        //{
+        //    for (int x = centerX - halfW - 1; x <= centerX + halfW + 1; ++x)
+        //    {
+        //        if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight) //개씨발 Height는 왜 되는데 애미 씨빨
+        //            continue;
+
+        //        // 5. 행, 열 → 칸 번호
+        //        int id = y * mapWidth + x;
+        //        var ren = tileObjs[id].GetComponent<SpriteRenderer>();
+
+        //        // 6. 안쪽 5×5인가?
+        //        bool inside = Mathf.Abs(x - centerX) <= halfW
+        //                   && Mathf.Abs(y - centerY) <= halfH;
+
+        //        if (inside)
+        //        {
+        //            revealed[id] = true;    // 봤다고 기억 아니 봤잖아
+        //            DecorateTile(id);               // 원래 그림으로 되돌리기
+        //            ren.enabled = true;
+        //        }
+        //        else if (!revealed[id])  // 테두리인데 아직 안 본 칸만
+        //        {
+        //            ren.sprite = fogSprite[0];
+        //            ren.enabled = true;
+        //        }
+        //    }
+        //}
+        #endregion
     }
 
 
@@ -190,14 +243,24 @@ public class Stage : MonoBehaviour
         var tile = map.tiles[tileId];
         var tileGo = tileObjs[tileId];
         var ren = tileGo.GetComponent<SpriteRenderer>();
-        if (tile.autoTileId != (int)TileTypes.Empty)
+
+        if(tile.isVisted)
         {
-            ren.sprite = islandSprites[tile.autoTileId];
+            if (tile.autoTileId != (int)TileTypes.Empty)
+            {
+                ren.sprite = islandSprites[tile.autoTileId];
+            }
+            else
+            {
+                ren.sprite = null;
+            }
         }
-        else
+        else //방문하지 않으면 안개타일로
         {
-            ren.sprite = null;
+            ren.sprite = fogSprite[tile.autoFowId];
         }
+
+
     }
 
     public int ScreenPosTileId(Vector3 screenPos, bool clamp = true)
