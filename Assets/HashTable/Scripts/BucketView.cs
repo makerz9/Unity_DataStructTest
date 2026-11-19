@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.ComponentModel.Design.Serialization;
+using UnityEditor.Animations;
 using UnityEngine;
 
 public enum BucketState
@@ -6,7 +8,6 @@ public enum BucketState
     Empty,
     Occupied,
     Deleted,
-
 }
 
 public readonly struct BucketView
@@ -14,19 +15,21 @@ public readonly struct BucketView
     public int Index { get; }
     public BucketState State { get; }
     public string Key { get; }
-    public string Value { get; }    
+    public string Value { get; }
     public IReadOnlyList<(string Key, string Value)> Chain { get; }
 
-    public BucketView(int index, BucketState state, string key, string value, IReadOnlyList<(string Key, string Value)> chain)
+    public BucketView(
+        int index,
+        BucketState state,
+        string key,
+        string value,
+        IReadOnlyList<(string, string)> chain
+    )
     {
         Index = index;
         State = state;
         Key = key;
         Value = value;
         Chain = chain;
-
-
     }
-
-
 }

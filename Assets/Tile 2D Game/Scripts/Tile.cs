@@ -1,5 +1,3 @@
-using Unity.VisualScripting;
-
 public enum Sides
 {
     Top,
@@ -54,10 +52,9 @@ public class Tile
     public Tile[] adjacents = new Tile[4];
 
     public int autoTileId;
-
     public int autoFowId;
 
-    public bool isVisted;
+    public bool isVisited;
 
     public Tile previous;
 
@@ -75,17 +72,16 @@ public class Tile
 
     public void UpdateAutoFowId()
     {
-        //TLR8
         autoFowId = 0;
         for (int i = 0; i < adjacents.Length; ++i)
         {
-            if (adjacents[i] == null || !adjacents[i].isVisted) //널이거나 방문안함
+            if (adjacents[i] == null || !adjacents[i].isVisited)
             {
-                autoFowId |= 1 << i; //해당 비트를 1로
+                // TLRB
+                autoFowId |= 1 << i;
             }
         }
     }
-
 
     public void RemoveAdjacents(Tile tile)
     {

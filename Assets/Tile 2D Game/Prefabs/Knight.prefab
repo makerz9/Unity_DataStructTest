@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6201260002237486035}
   - component: {fileID: 2946129354562336497}
   - component: {fileID: 5026625661490495624}
-  - component: {fileID: -4827678547493674872}
+  - component: {fileID: -8055880463024767109}
   m_Layer: 0
   m_Name: Knight
   m_TagString: Untagged
@@ -115,7 +115,7 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &-4827678547493674872
+--- !u!114 &-8055880463024767109
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -124,7 +124,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6834208039423047932}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 101a35a64d0e3aa48b2864b6a0562927, type: 3}
+  m_Script: {fileID: 11500000, guid: f7fc9d9e8c57d454bbbdc835ab2817a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player
-  moveSpeed: 60
+  moveSpeed: 30

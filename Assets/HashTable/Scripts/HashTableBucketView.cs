@@ -1,11 +1,11 @@
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
-using System.Collections.Generic;
 
 public class HashTableBucketView : MonoBehaviour
 {
-    public Image backGroundImage;
+    public Image backgroudImage;
     public TMP_Text indexText;
     public TMP_Text contentText;
 
@@ -23,38 +23,31 @@ public class HashTableBucketView : MonoBehaviour
 
     public void SetEmpty()
     {
-        backGroundImage.color = EmptyColor;
+        backgroudImage.color = EmptyColor;
         contentText.text = string.Empty;
-
     }
 
     public void SetOccupied(string key, string value)
     {
-        backGroundImage.color = OccupiedColor;
+        backgroudImage.color = OccupiedColor;
         contentText.text = $"K: {key}\t\tV:{value}";
-
     }
 
     public void SetDeleted()
     {
-        backGroundImage.color = DeletedColor;
+        backgroudImage.color = DeletedColor;
         contentText.text = "(deleted)";
-
     }
 
-    public void SetChainedItem(List<string> items)
+    public void SetChainedItesm(List<string> items)
     {
-        if(items == null || items.Count ==0)
+        if (items == null || items.Count == 0)
         {
             SetEmpty();
             return;
         }
 
-        backGroundImage.color = OccupiedColor;
-        contentText.text = string.Join(" ->", items);
+        backgroudImage.color = OccupiedColor;
+        contentText.text = string.Join(" -> ", items);
     }
-
-
-
-
 }

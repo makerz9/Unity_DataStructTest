@@ -1,5 +1,6 @@
+using Mono.Cecil;
+using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class Stage : MonoBehaviour
 {
@@ -9,17 +10,12 @@ public class Stage : MonoBehaviour
     public int mapWidth = 20;
     public int mapHeight = 20;
 
-    public int viewWidth = 5;
-    public int viewHeight = 5;
-
     public Vector2 tileSize = new Vector2(16, 16);
 
     public Sprite[] islandSprites;
-    public Sprite[] fogSprite;
+    public Sprite[] fowSprites;
 
-    public int visitRadius;
-
-    private bool[] revealed;
+    public int visitRadius = 1;
 
     private Map map;
 
@@ -47,24 +43,21 @@ public class Stage : MonoBehaviour
     [Range(0f, 0.9f)]
     public float monsterPercent = 0.1f;
 
-
     private void Awake()
     {
         ResetStage();
     }
 
-
     [ContextMenu("Reset Stage")]
-    //맵 재생성
     public void ResetStage()
     {
-        map = new Map(); //새 맵 생성
+        map = new Map();
         bool succeed = false;
-        int maxAttemp = 10; //무한루프 방지
+        int maxAttemp = 10;
         for (int i = 0; i < maxAttemp && !succeed; ++i)
         {
-            map.Init(mapHeight, mapWidth);//맵 초기화
-            succeed = map.CreateIsland( //성공했다면 succeed에 true 담김
+            map.Init(mapHeight, mapWidth);
+            succeed = map.CreateIsland(
                 erodePercent,
                 erodeIterations,
                 lakePercent,
@@ -86,8 +79,8 @@ public class Stage : MonoBehaviour
         CreateGrid();
         CreatePlayer();
 
-        //map.startTile.isVisted = true;
-        //DecorateTile(m);
+        // map.startTile.isVisited = true;
+        // DecorateTile(map.startTile);
     }
 
     public Vector3 firstTilePos;
@@ -95,89 +88,39 @@ public class Stage : MonoBehaviour
     public GameObject playerPrefab;
     private Player player;
 
-
-    private void CreatePlayer() //캐릭터 새로 생성
+    public void OnTileVisited(int tileId)
     {
-        if(player != null) //플레이어가 존재한다 = 제거함
-        {
-            Destroy(player.gameObject);
-            player = null;
-        }
+        Debug.Log(
+            $"OnTileVisited({tileId}: ({tileId / mapWidth}, {tileId % mapHeight}) / {map.tiles[tileId].autoTileId})"
+        );
 
-        //Instantiate(playerPrefab, GetTilePos(map.startTile.id), Quaternion.identity);
-
-        var newGo = Instantiate(playerPrefab); //플레이어프리팹 생성
-        player = newGo.GetComponent<Player>(); // 생성한 오브젝트에 붙어 있는 Player 스크립트를 꺼내 player에 보관
-    }
-
-    private void CreateGrid()
-    {
-        if (tileObjs != null) // tileObjs가 존재한다?
-        {
-            foreach (var tile in tileObjs) 
-            {
-                Destroy(tile.gameObject); //겹치지 않게 싹 비움
-            }
-        }
-        tileObjs = new GameObject[mapWidth * mapHeight]; //이건 생성자 문법인데 뭘 어떻게 만든거지 
-        revealed = new bool[mapWidth * mapHeight]; // 이거도
-
-        Vector3 pos = firstTilePos; //왜 시작 포스를 지정한거지
-        float startX = pos.x; //이거도
-        for (int i = 0; i < mapHeight; ++i)
-        {
-            for (int j = 0; j < mapWidth; ++j) //가로 세로 이중포문해서 공간을 채움?
-            {
-                var tileId = i * mapWidth + j; //이거 식이 이해가안가네
-                var tile = map.tiles[tileId]; //
-
-                var newGo = Instantiate(tilePrefab, transform);
-                newGo.transform.position = pos;
-                pos.x += tileSize.x;
-
-                newGo.name = $"Tile {tileId} ({i}, {j})";
-                tileObjs[tileId] = newGo;
-
-                DecorateTile(tileId);
-                //newGo.GetComponent<SpriteRenderer>().enabled = false;
-            }
-            pos.x = startX;
-            pos.y -= tileSize.y;
-        }
-    }
-
-
-    public void OnTileVisted(int tileId)
-    {
-        Debug.Log($"");
-
-        int centerY = tileId / mapWidth; // 
-        int centerX = tileId % mapWidth; // 
+        int centerX = tileId % mapWidth;
+        int centerY = tileId / mapWidth;
 
         int radius = visitRadius;
-
-        for(int i = -visitRadius; i <= visitRadius; i++)
+        for (int i = -radius; i <= radius; ++i)
         {
-            for (int j = -visitRadius; j <= visitRadius; j++)
+            for (int j = -radius; j <= radius; ++j)
             {
                 int x = centerX + j;
                 int y = centerY + i;
-                if(x < 0 || x >= mapWidth || y < 0 || y >= mapHeight)
+                if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight)
                 {
                     continue;
                 }
 
                 int id = y * mapWidth + x;
-                map.tiles[id].isVisted = true;
+                map.tiles[id].isVisited = true;
                 DecorateTile(id);
             }
         }
 
-        for(int i = -radius;i <= radius;i++)
+        radius += 1;
+        for (int i = -radius; i <= radius; ++i)
         {
-            for(int j = -radius;j <= radius;j++)
+            for (int j = -radius; j <= radius; ++j)
             {
-                if(i == radius || i == -radius || j == radius || j == -radius)
+                if (i == radius || i == -radius || j == radius || j == -radius)
                 {
                     int x = centerX + j;
                     int y = centerY + i;
@@ -190,53 +133,56 @@ public class Stage : MonoBehaviour
                     map.tiles[id].UpdateAutoFowId();
                     DecorateTile(id);
                 }
-
-
             }
         }
-
-        #region
-        //int centerY = tileId / mapWidth; // ???????
-        //int centerX = tileId % mapWidth; //  ???????? 이게 아까 그 칸수구하는 그거임? 
-
-        //// 2. 5×5의 절반
-        //int halfW = viewWidth / 2;
-        //int halfH = viewHeight / 2;
-
-        //for (int y = centerY - halfH - 1; y <= centerY + halfH + 1; ++y)
-        //{
-        //    for (int x = centerX - halfW - 1; x <= centerX + halfW + 1; ++x)
-        //    {
-        //        if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight) //개씨발 Height는 왜 되는데 애미 씨빨
-        //            continue;
-
-        //        // 5. 행, 열 → 칸 번호
-        //        int id = y * mapWidth + x;
-        //        var ren = tileObjs[id].GetComponent<SpriteRenderer>();
-
-        //        // 6. 안쪽 5×5인가?
-        //        bool inside = Mathf.Abs(x - centerX) <= halfW
-        //                   && Mathf.Abs(y - centerY) <= halfH;
-
-        //        if (inside)
-        //        {
-        //            revealed[id] = true;    // 봤다고 기억 아니 봤잖아
-        //            DecorateTile(id);               // 원래 그림으로 되돌리기
-        //            ren.enabled = true;
-        //        }
-        //        else if (!revealed[id])  // 테두리인데 아직 안 본 칸만
-        //        {
-        //            ren.sprite = fogSprite[0];
-        //            ren.enabled = true;
-        //        }
-        //    }
-        //}
-        #endregion
     }
 
+    private void CreatePlayer()
+    {
+        if (player != null)
+        {
+            Destroy(player.gameObject);
+            player = null;
+        }
 
+        var newGo = Instantiate(playerPrefab);
+        player = newGo.GetComponent<Player>();
+    }
 
+    private void CreateGrid()
+    {
+        if (tileObjs != null)
+        {
+            foreach (var tile in tileObjs)
+            {
+                Destroy(tile.gameObject);
+            }
+        }
+        tileObjs = new GameObject[mapWidth * mapHeight];
 
+        Vector3 pos = firstTilePos;
+        float startX = pos.x;
+        for (int i = 0; i < mapHeight; ++i)
+        {
+            for (int j = 0; j < mapWidth; ++j)
+            {
+                var tileId = i * mapWidth + j;
+                var tile = map.tiles[tileId];
+
+                var newGo = Instantiate(tilePrefab, transform);
+                newGo.transform.position = pos;
+                pos.x += tileSize.x;
+
+                newGo.name = $"Tile {tileId} ({i}, {j})";
+                tileObjs[tileId] = newGo;
+
+                //tile.UpdateAutoFowId();
+                DecorateTile(tileId);
+            }
+            pos.x = startX;
+            pos.y -= tileSize.y;
+        }
+    }
 
     public void DecorateTile(int tileId)
     {
@@ -244,7 +190,7 @@ public class Stage : MonoBehaviour
         var tileGo = tileObjs[tileId];
         var ren = tileGo.GetComponent<SpriteRenderer>();
 
-        if(tile.isVisted)
+        if (tile.isVisited)
         {
             if (tile.autoTileId != (int)TileTypes.Empty)
             {
@@ -255,12 +201,10 @@ public class Stage : MonoBehaviour
                 ren.sprite = null;
             }
         }
-        else //방문하지 않으면 안개타일로
+        else
         {
-            ren.sprite = fogSprite[tile.autoFowId];
+            ren.sprite = fowSprites[tile.autoFowId];
         }
-
-
     }
 
     public int ScreenPosTileId(Vector3 screenPos, bool clamp = true)

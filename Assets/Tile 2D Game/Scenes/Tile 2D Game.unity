@@ -679,8 +679,6 @@ MonoBehaviour:
   - {fileID: 0}
   mapWidth: 20
   mapHeight: 20
-  viewWidth: 5
-  viewHeight: 5
   tileSize: {x: 16, y: 16}
   islandSprites:
   - {fileID: 21300000, guid: 6dda2095192964815b349ac505a5e664, type: 3}
@@ -705,7 +703,7 @@ MonoBehaviour:
   - {fileID: 21300038, guid: 6dda2095192964815b349ac505a5e664, type: 3}
   - {fileID: 21300040, guid: 6dda2095192964815b349ac505a5e664, type: 3}
   - {fileID: 21300042, guid: 6dda2095192964815b349ac505a5e664, type: 3}
-  fogSprite:
+  fowSprites:
   - {fileID: 21300000, guid: dfa5f63634ba24c06a7c899467e4f9f3, type: 3}
   - {fileID: 21300002, guid: dfa5f63634ba24c06a7c899467e4f9f3, type: 3}
   - {fileID: 21300004, guid: dfa5f63634ba24c06a7c899467e4f9f3, type: 3}
@@ -722,7 +720,7 @@ MonoBehaviour:
   - {fileID: 21300026, guid: dfa5f63634ba24c06a7c899467e4f9f3, type: 3}
   - {fileID: 21300028, guid: dfa5f63634ba24c06a7c899467e4f9f3, type: 3}
   - {fileID: 21300030, guid: dfa5f63634ba24c06a7c899467e4f9f3, type: 3}
-  visitRadius: 3
+  visitRadius: 1
   erodePercent: 0.242
   erodeIterations: 2
   lakePercent: 0.072
@@ -854,7 +852,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 150
+  orthographic size: 200
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -879,7 +877,7 @@ Transform:
   m_GameObject: {fileID: 961739749}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 150, y: -150, z: -10}
+  m_LocalPosition: {x: 160, y: -160, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
