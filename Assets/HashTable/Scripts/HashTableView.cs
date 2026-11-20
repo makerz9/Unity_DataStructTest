@@ -224,6 +224,7 @@ public class HashTableView : MonoBehaviour
                         simpleHashTable.Add(key, value);
                         break;
                     case HashTableTypes.Chaining:
+                        //ChainingHashTable.Add
                         break;
                     case HashTableTypes.OpenAddressing:
                         break;
